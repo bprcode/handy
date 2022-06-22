@@ -275,6 +275,20 @@
         return rv;
     }
 
+    function centerPadString(s = '', size = 10, padWith = ' '){
+        if (s.length > size)
+            return s.slice(0, size)
+        
+        let freeSpace = size - s.length
+        let leadingPad = Math.floor( freeSpace / 2 )
+        let trailingPad = leadingPad
+        
+        if (freeSpace % 2 == 1)
+            trailingPad += 1    // Handle odd-length spacing
+    
+        return padWith.repeat(leadingPad) + s + padWith.repeat(trailingPad)
+    }
+
     // Export global variables
     globalThis.pink     = pink
     globalThis.blue     = blue
@@ -290,6 +304,7 @@
     globalThis.moo      = barn
     globalThis.upTo     = upTo
     globalThis.allKeys     = allKeys
+    globalThis.centerPadString = centerPadString
     globalThis.err      = (...etc) => {log(PANIC, ...etc)}
 
     log('Convience functions imported.', blue)
