@@ -3,16 +3,20 @@
     
     const pink = Symbol('pink')
     const blue = Symbol('blue')
+    const green = Symbol('green')
+    const yellow = Symbol('yellow')
+
     const flicker = Symbol('flicker')
     const dim = Symbol('dim')
     const PANIC = Symbol('PANIC')
 
     let colorPink = `\x1b[35m`
     let colorBlue = `\x1b[34m`
+    let colorGreen = `\x1b[32m`
+    let colorYellow = `\x1b[33m`
     let colorDim = `\x1b[2m`
     let colorPlain = `\x1b[0m`
     let colorPanic = `\x1b[41m`
-    let colorYellow = `\x1b[33m`
     let colorRed = `\x1b[31m`
 
     let barnyard = '💀👻👽👾🤖😻🙉🐶🦒🦊🦝🐷🐭🐹🐰🐨🐼🐸🦄🐔🐲🐐🐘🦎🐢🐊🐍🐬🐳🐟🐠🦐🦑🐙🦞🦀🦆🐓🦃🦅🕊🦜🦩🦚🐦🐧🐤🦇🦋🐌🐛🦗🦠'
@@ -80,6 +84,14 @@
 
                 case blue:
                     mode = colorBlue
+                    break
+
+                case green:
+                    mode = colorGreen
+                    break
+                
+                case yellow:
+                    mode = colorYellow
                     break
 
                 case flicker:
@@ -292,6 +304,8 @@
     // Export global variables
     globalThis.pink     = pink
     globalThis.blue     = blue
+    globalThis.green    = green
+    globalThis.yellow   = yellow
     globalThis.flicker  = flicker
     globalThis.dim      = dim
     globalThis.PANIC    = PANIC
