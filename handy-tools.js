@@ -1,6 +1,8 @@
 // Exports convenience functions to global variables for REPL testing.
 ( function(){
     
+    const isBrowser = typeof window !== 'undefined'
+
     const pink = Symbol('pink')
     const blue = Symbol('blue')
     const green = Symbol('green')
@@ -9,17 +11,48 @@
     const flicker = Symbol('flicker')
     const dim = Symbol('dim')
     const PANIC = Symbol('PANIC')
-
-    let colorPink = `\x1b[35m`
-    let colorBlue = `\x1b[34m`
-    let colorGreen = `\x1b[32m`
-    let colorYellow = `\x1b[33m`
-    let colorDim = `\x1b[2m`
-    let colorPlain = `\x1b[0m`
-    let colorPanic = `\x1b[41m`
-    let colorRed = `\x1b[31m`
-
+    
     let barnyard = '💀👻👽👾🤖😻🙉🐶🦒🦊🦝🐷🐭🐹🐰🐨🐼🐸🦄🐔🐲🐐🐘🦎🐢🐊🐍🐬🐳🐟🐠🦐🦑🐙🦞🦀🦆🐓🦃🦅🕊🦜🦩🦚🐦🐧🐤🦇🦋🐌🐛🦗🦠'
+    
+    let colorPink
+    let colorBlue
+    let colorGreen
+    let colorYellow
+    let colorDim
+    let colorPlain
+    let colorPanic
+    let colorRed
+
+    if(isBrowser){
+        colorPlain = `color: rgb(200, 200, 200)`
+        colorDim = `color: rgb(100, 100, 150)`
+        colorPink = `color: rgb(255, 160, 230); text-shadow: `
+                            +`0.1em 0.1em 0.5em rgba(255, 160, 230, 0.99), `
+                            +`0.0em 0.0em 0.25em rgba(255, 160, 230, 0.99)`
+        colorBlue = `color: rgb(120, 135, 255); text-shadow: `
+                            +`0.1em 0.1em 0.65em rgba(120, 135, 255, 0.99), `
+                            +`0.0em 0.0em 0.25em rgba(120, 135, 255, 0.99)`
+        colorGreen = `color: rgb(160, 255, 230); text-shadow: `
+                            +`0.1em 0.1em 0.5em rgba(160, 255, 230, 0.99), `
+                            +`0.0em 0.0em 0.25em rgba(160, 255, 230, 0.99)`
+        colorYellow = `color: rgb(255, 230, 160); text-shadow: `
+                            +`0.1em 0.1em 0.5em rgba(255, 230, 160, 0.99), `
+                            +`0.0em 0.0em 0.25em rgba(255, 230, 160, 0.99)`
+        colorPanic = `color: rgb(255, 240, 85); text-shadow: `
+                            +`0.1em 0.1em 0.15em rgba(255, 85, 115, 0.99), `
+                            +`0.1em -0.1em 0.25em rgba(255, 85, 115, 0.99), `
+                            +`0.1em +0.1em 0.25em rgba(255, 85, 115, 0.99),`
+                            +`0.0em +0.0em 0.5em rgba(255, 85, 115, 0.99)`
+    } else {
+        colorPink   = `\x1b[35m`
+        colorBlue   = `\x1b[34m`
+        colorGreen  = `\x1b[32m`
+        colorYellow = `\x1b[33m`
+        colorDim    = `\x1b[2m`
+        colorPlain  = `\x1b[0m`
+        colorPanic  = `\x1b[41m`
+        colorRed    = `\x1b[31m`
+    }
 
     function upTo(n){
         n++
@@ -53,8 +86,7 @@
     qlog.unprint = () => qlog.queue.pop()
     qlog.send = () => {log(...qlog.queue); qlog.queue.length = 0;}
     
-    // Node version of shortened console logging function.
-    // Adapted from web-based version (from handy.js).
+    // Alternative to console.log with more convenient syntax.
     // Supports syntax coloring. Example: log('abc', 'def', pink, 'xyz', blue)
     function log(...etc){
 
@@ -95,7 +127,10 @@
                     break
 
                 case flicker:
-                    mode = flickerNode()
+                    if (isBrowser)
+                        mode = flickerCss()
+                    else
+                        mode = flickerNode()
                     break
 
                 case dim:
@@ -108,13 +143,20 @@
                     
                 // If encountering something other than a special state symbol...
                 default:
-                    if(typeof current !== 'object'
-                        && typeof current !== 'function'
-                    ){
-                        str = mode + current + colorPlain + str
-                        unformatted = current + unformatted
-                    }
-                    else{   // Objects get unshifted onto the argument list.
+                    if (typeof current !== 'object'
+                        && typeof current !== 'function'){
+                        // Format differently depending on whether the
+                        // environment is a browser (CSS support) or
+                        // a console (using color escape sequences).
+                        if (isBrowser){
+                            objectQueue.unshift(mode)
+                            str = '%c' + current + str
+                            unformatted = current + unformatted
+                        } else {
+                            str = mode + current + colorPlain + str
+                            unformatted = current + unformatted
+                        }
+                    } else {   // Objects get unshifted onto the argument list.
                         objectQueue.unshift(current)
                         str = '%o ' + str
                         unformatted = '<object>' + unformatted
@@ -131,10 +173,37 @@
             log.switch ??= true
             log.switch = !log.switch
 
-            if(log.switch)
+            if (log.switch)
                 return colorRed
             else
                 return colorYellow
+        }
+
+        function flickerCss(){
+            log.flickerCss ??= {}
+            log.flickerCss.switch ??= true
+            log.flickerCss.lastH ??= 0
+            log.flickerCss.hueDirection ??= true
+
+            log.flickerCss.switch = !log.flickerCss.switch
+            
+            if (log.flickerCss.hueDirection){
+                log.flickerCss.lastH += rnd(1,10)
+                if (log.flickerCss.lastH >= 30)
+                    log.flickerCss.hueDirection = false
+            } else {
+                log.flickerCss.lastH -= rnd(1,10)
+                if (log.flickerCss.lastH <= 0)
+                    log.flickerCss.hueDirection = true
+            }
+
+            let l;
+                if (log.flickerCss.switch)
+                    l = rnd(70,80)
+                else
+                    l = rnd(45,60)
+
+            return `color: hsl(`+log.flickerCss.lastH+`, 100%, `+l+`%)`
         }
     }
 
@@ -287,7 +356,7 @@
         return rv;
     }
 
-    function centerPadString(s = '', size = 10, padWith = ' '){
+    function centerPad(s = '', size = 10, padWith = ' '){
         if (s.length > size)
             return s.slice(0, size)
         
@@ -318,7 +387,7 @@
     globalThis.moo      = barn
     globalThis.upTo     = upTo
     globalThis.allKeys     = allKeys
-    globalThis.centerPadString = centerPadString
+    globalThis.centerPad = centerPad
     globalThis.err      = (...etc) => {log(PANIC, ...etc)}
 
     log('Convience functions imported.', blue)
