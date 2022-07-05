@@ -1,5 +1,5 @@
 // Exports convenience functions to global variables for REPL testing.
-( function(){
+( function (){
     
     const isBrowser = typeof window !== 'undefined'
 
@@ -13,7 +13,8 @@
     const PANIC = Symbol('PANIC')
     
     let barnyard = '💀👻👽👾🤖😻🙉🐶🦒🦊🦝🐷🐭🐹🐰🐨🐼🐸🦄🐔🐲🐐🐘🦎🐢🐊🐍🐬🐳🐟🐠🦐🦑🐙🦞🦀🦆🐓🦃🦅🕊🦜🦩🦚🐦🐧🐤🦇🦋🐌🐛🦗🦠'
-    
+    let moonCycle = '🌑🌒🌓🌔🌕🌖🌗🌘'
+
     let colorPink
     let colorBlue
     let colorGreen
@@ -23,7 +24,7 @@
     let colorPanic
     let colorRed
 
-    if(isBrowser){
+    if (isBrowser){
         colorPlain = `color: rgb(200, 200, 200)`
         colorDim = `color: rgb(100, 100, 150)`
         colorPink = `color: rgb(255, 160, 230); text-shadow: `
@@ -54,20 +55,35 @@
         colorRed    = `\x1b[31m`
     }
 
-    function upTo(n){
-        n++
-        return new Array(n).keys()
+    function * upTo (n = 1){
+        for (let i = 0; i <= n; i++)
+            yield i
     }
 
-    function barn(n){
-            if(n){
+    function moo(n){
+        // Account for UTF-16 character pairs
+            if (n){
                 if(n > barnyard.length / 2 - 1)
                     return '❌'
 
-                n *= 2;
+                n *= 2
             }
         n ??= 2 * rnd(0,(barnyard.length / 2 - 1))
         return String.fromCodePoint( barnyard.codePointAt(n) )
+    }
+
+    function moon(n){
+        // Account for UTF-16 character pairs
+        if (n){
+            n %= (moonCycle.length / 2)
+        } else {
+            moon.index ??= -1
+            moon.index++
+            moon.index %= (moonCycle.length / 2)
+            n = moon.index
+        }
+        n *= 2
+        return String.fromCodePoint( moonCycle.codePointAt(n) )
     }
 
     // Do something, but later.
@@ -77,7 +93,7 @@
         )
     }
 
-    // Usage: qlog(x); qlog(y); qlog.send();
+    // Usage: log.queue(x); log.queue(y); log.send();
     function qlog(...etc){
         qlog.queue ??= []
         qlog.queue.push(...etc)
@@ -88,9 +104,9 @@
     
     // Alternative to console.log with more convenient syntax.
     // Supports syntax coloring. Example: log('abc', 'def', pink, 'xyz', blue)
-    function log(...etc){
+    function log (...etc){
 
-        if(etc.length <= 1)
+        if (etc.length <= 1)
             return console.log(...etc) ?? etc[0]
 
         let str = ''
@@ -98,7 +114,7 @@
         let objectQueue = []
         let resetColor = colorPlain
 
-        if(etc[0] === PANIC){ // Switch color behavior for error strings
+        if (etc[0] === PANIC){ // Switch color behavior for error strings
             resetColor = colorPanic
             etc.shift()
         }
@@ -169,7 +185,7 @@
         console.log(str, ...objectQueue)
         return unformatted
 
-        function flickerNode(){
+        function flickerNode (){
             log.switch ??= true
             log.switch = !log.switch
 
@@ -179,7 +195,7 @@
                 return colorYellow
         }
 
-        function flickerCss(){
+        function flickerCss (){
             log.flickerCss ??= {}
             log.flickerCss.switch ??= true
             log.flickerCss.lastH ??= 0
@@ -208,15 +224,15 @@
     }
 
     const MultiArray = class{
-        constructor(...dimensions){
+        constructor (...dimensions){
         this.dimensions = dimensions
         this.marr = fill('',...dimensions)
         
-        function fill(k='', ...etc){
+        function fill (k='', ...etc){
             const n = etc[0]
             let a = new Array(n)
             
-            if(etc.length === 1){    
+            if (etc.length === 1){    
                 for(let i = 0; i < n; i++)a[i]= k+i
                 return a
             }
@@ -229,13 +245,13 @@
         }
         }
 
-        assign(value, ...ijk){
+        assign (value, ...ijk){
 
-            if(ijk.length !== this.dimensions.length)
+            if (ijk.length !== this.dimensions.length)
                 return err('Dimensions do not match.')
 
-            for(let n = 0; n < ijk.length; n++)
-                if(ijk[n] >= this.dimensions[n])
+            for (let n = 0; n < ijk.length; n++)
+                if (ijk[n] >= this.dimensions[n])
                     return err('Index out of bounds.')
 
             let ptr = this.marr
@@ -246,16 +262,16 @@
             ptr[ijk.shift()] = value;
         }
 
-        map(callback){
+        map (callback){
             let result = new MultiArray(...this.dimensions)
             let indices = new Array(this.dimensions.length).fill(0)
 
             const step = (index = this.dimensions.length - 1) => {
-                if(index < 0)
+                if (index < 0)
                     return false
                 
                 indices[index]++
-                if(indices[index] >= this.dimensions[index]){
+                if (indices[index] >= this.dimensions[index]){
                     indices[index] = 0
                     return step(index - 1)
                 }
@@ -276,22 +292,22 @@
             return {indices:new Array(this.dimensions.length).fill(0), next(){
                 // internal method for incrementing the counter
                 const tick = (index = that.dimensions.length - 1) => {
-                    if(index < 0)
+                    if (index < 0)
                         return false
 
                     this.indices[index]++
-                    if(this.indices[index] >= that.dimensions[index]){
+                    if (this.indices[index] >= that.dimensions[index]){
                         this.indices[index] = 0
                         return tick(index - 1)
                     }
                     return true
                 }
 
-                if(done)
+                if (done)
                     return {done:true}
 
                 let rv = that.fetch(...this.indices)
-                if( !tick() ){
+                if ( !tick() ){
                     done = true
                 }
                 
@@ -300,15 +316,15 @@
         }
 
         fetch(...ijk){
-            if(ijk.length > this.dimensions.length) return err('Too many parameters.')
-            for(let i = 0; i < ijk.length; i++)//bounds checking
-                if(ijk[i] >= this.dimensions[i]) return err('Out of bounds.')
+            if (ijk.length > this.dimensions.length) return err('Too many parameters.')
+            for (let i = 0; i < ijk.length; i++)//bounds checking
+                if (ijk[i] >= this.dimensions[i]) return err('Out of bounds.')
             let index, ptr = this.marr;
             while( (index = ijk.shift()) !== undefined )ptr=ptr[index]
             return ptr
         }
         
-        print(){
+        print (){
             for(let io = 0; io < this.dimensions[0]; io++){
                 qlog('(',dim)
                 parse(this.marr[io], ...this.dimensions.slice(1) )
@@ -318,9 +334,9 @@
 
             return this
 
-            function parse(ptr, ...dims){
+            function parse (ptr, ...dims){
                 let str = '';
-                if(dims.length === 1){	// generally, write terminal condition first?
+                if (dims.length === 1){	// generally, write terminal condition first?
                     qlog('<',dim)
                     for(let i = 0; i < ptr.length; i++)
                         qlog(ptr[i] + (i !== ptr.length - 1 ? ' ' : ''), flicker)
@@ -339,24 +355,24 @@
         }
         }
 
-    function rnd(min = 0, max = 10){
+    function rnd (min = 0, max = 10){
         return(Math.floor( Math.random() * (1 + max - min) + min ))
     }
 
-    function allKeys(child){
-        if( !child )
+    function allKeys (child){
+        if ( !child )
             return [];
 
         let rv = Reflect.ownKeys(child);
         let parent = Object.getPrototypeOf(child);
-        if(parent){
+        if (parent){
             rv.push( ...allKeys(Object.getPrototypeOf(child)).map(s => `«${parent.constructor.name}» ` + String(s) ));
         }
 
         return rv;
     }
 
-    function centerPad(s = '', size = 10, padWith = ' '){
+    function centerPad (s = '', size = 10, padWith = ' '){
         if (s.length > size)
             return s.slice(0, size)
         
@@ -379,16 +395,18 @@
     globalThis.dim      = dim
     globalThis.PANIC    = PANIC
     globalThis.log      = log
-    globalThis.qlog     = qlog
     globalThis.rnd      = rnd
     globalThis.later    = later
     globalThis.MultiArray = MultiArray
     globalThis.barnyard = barnyard
-    globalThis.moo      = barn
+    globalThis.moo      = moo
+    globalThis.moon     = moon
     globalThis.upTo     = upTo
-    globalThis.allKeys     = allKeys
-    globalThis.centerPad = centerPad
-    globalThis.err      = (...etc) => {log(PANIC, ...etc)}
+    globalThis.allKeys      = allKeys
+    globalThis.centerPad    = centerPad
+    globalThis.log.queue    = qlog
+    globalThis.log.unprint  = qlog.unprint
+    globalThis.log.send     = qlog.send
+    globalThis.log.err      = (...etc) => {log(PANIC, ...etc)}
 
-    log('Convience functions imported.', blue)
 })()
