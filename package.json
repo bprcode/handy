@@ -1,6 +1,6 @@
 {
   "name": "@bprcode/handy",
-  "version": "0.2.0",
+  "version": "0.3.3",
   "description": "Small library of convenience functions, e.g. colorized console output.",
   "main": "handy-tools.js",
   "scripts": {
