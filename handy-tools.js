@@ -112,9 +112,14 @@
         let str = ''
         let unformatted = ''
         let objectQueue = []
-        let resetColor = colorPlain
+        let print = console.log // Allow switching to console.error
+                                // for stderr output.
+
+        log.fallbackColor ??= colorPlain    // Allow for specified default
+        let resetColor = log.fallbackColor
 
         if (etc[0] === PANIC){ // Switch color behavior for error strings
+            print = console.error
             resetColor = colorPanic
             etc.shift()
         }
@@ -182,7 +187,7 @@
             }
         }
 
-        console.log(str, ...objectQueue)
+        print(str, ...objectQueue)
         return unformatted
 
         function flickerNode (){
@@ -221,6 +226,15 @@
 
             return `color: hsl(`+log.flickerCss.lastH+`, 100%, `+l+`%)`
         }
+    }
+
+    // Return a color sequentially selected selected from this list.
+    function getRainbow () {
+        const colors = [colorPink, colorYellow, colorGreen, colorBlue]
+        getRainbow.index ??= -1
+        getRainbow.index++
+        getRainbow.index %= colors.length
+        return colors[getRainbow.index]
     }
 
     const MultiArray = class{
@@ -407,6 +421,15 @@
     globalThis.log.queue    = qlog
     globalThis.log.unprint  = qlog.unprint
     globalThis.log.send     = qlog.send
-    globalThis.log.err      = (...etc) => {log(PANIC, ...etc)}
+    globalThis.log.err      = (...etc) => {return log(PANIC, ...etc)}
+    globalThis.log.rainbow  = (...etc) => 
+        {
+            log.fallbackColor = getRainbow()
+            // Extra empty string at end to prevent short-circuiting
+            // behavior inside log().
+            let result = log(...etc, '')
+            log.fallbackColor = colorPlain
+            return result
+        }
 
 })()
